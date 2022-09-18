@@ -13,6 +13,7 @@ import (
 	"github.com/k3s-io/kine/pkg/drivers/mysql"
 	"github.com/k3s-io/kine/pkg/drivers/pgsql"
 	"github.com/k3s-io/kine/pkg/drivers/sqlite"
+	"github.com/k3s-io/kine/pkg/drivers/uor"
 	"github.com/k3s-io/kine/pkg/metrics"
 	"github.com/k3s-io/kine/pkg/server"
 	"github.com/k3s-io/kine/pkg/tls"
@@ -34,6 +35,7 @@ const (
 	JetStreamBackend = "jetstream"
 	MySQLBackend     = "mysql"
 	PostgresBackend  = "postgres"
+	UORBackend       = "uor"
 )
 
 type Config struct {
@@ -248,6 +250,9 @@ func getKineStorageBackend(ctx context.Context, driver, dsn string, cfg Config) 
 		backend, err = mysql.New(ctx, dsn, cfg.BackendTLSConfig, cfg.ConnectionPoolConfig, cfg.MetricsRegisterer)
 	case JetStreamBackend:
 		backend, err = jetstream.New(ctx, dsn, cfg.BackendTLSConfig)
+	case UORBackend:
+		backend, err = uor.New(ctx, dsn, cfg.BackendTLSConfig)
+
 	default:
 		return false, nil, fmt.Errorf("storage backend is not defined")
 	}
@@ -263,6 +268,8 @@ func ParseStorageEndpoint(storageEndpoint string) (string, string) {
 		return SQLiteBackend, ""
 	case "nats":
 		return JetStreamBackend, storageEndpoint
+	case "uor":
+		return UORBackend, address
 	case "http":
 		fallthrough
 	case "https":
